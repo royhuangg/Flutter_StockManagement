@@ -1,9 +1,8 @@
 import 'package:english_words/english_words.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:stock_management/model/Stock.dart';
-
-import 'detail.dart';
+import 'package:stock_management/page/item_list.dart';
+import 'package:stock_management/page/record_form.dart';
 
 void main() {
   runApp(MyApp());
@@ -87,9 +86,9 @@ class _MyHomePageState extends State<MyHomePage> {
     Widget page;
     switch (selectedIndex) {
       case 0:
-        page = GeneratorPage();
+        page = ItemListPage();
       case 1:
-        page = FavoritesPage();
+        page = RecordFormPage();
       default:
         throw UnimplementedError('no widget for $selectedIndex');
     }
@@ -100,7 +99,7 @@ class _MyHomePageState extends State<MyHomePage> {
           SafeArea(
             child: NavigationRail(
               extended: false,
-              destinations: [
+              destinations: const [
                 NavigationRailDestination(
                   icon: Icon(Icons.home),
                   label: Text('Home'),
@@ -126,117 +125,6 @@ class _MyHomePageState extends State<MyHomePage> {
           ),
         ],
       ),
-    );
-  }
-}
-
-class ItemListPage1 extends StatelessWidget {
-  final List<String> items = List.generate(20, (index) => 'Item ${index + 1}');
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('ListView Example'),
-      ),
-      body: ListView.builder(
-        itemCount: items.length,
-        itemBuilder: (context, index) {
-          return ListTile(
-            leading: Icon(Icons.label),
-            title: Text(items[index]),
-            onTap: () {
-              // Handle item tap
-              showDialog(
-                context: context,
-                builder: (context) => AlertDialog(
-                  title: Text('Item Tapped'),
-                  content: Text('You tapped on ${items[index]}'),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: Text('OK'),
-                    ),
-                  ],
-                ),
-              );
-            },
-          );
-        },
-      ),
-    );
-  }
-}
-
-class ItemListPage extends StatelessWidget {
-  final List<StockItem> items = StockItem.generateMockData();
-
-  @override
-  Widget build(BuildContext context) {
-    return ListView.builder(
-      itemCount: items.length,
-      itemBuilder: (context, index) {
-        return Padding(
-            padding: EdgeInsets.all(8.0),
-            child: Container(
-                padding: EdgeInsets.all(8.0),
-                decoration: BoxDecoration(
-                  color:
-                      index % 2 == 0 ? Colors.grey[200] : Colors.blueGrey[100],
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                        child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('商品名稱：${items[index].name}',
-                            style: TextStyle(fontSize: 18)),
-                        SizedBox(height: 8),
-                        Text('平均價格：${items[index].avgPrice}'),
-                      ],
-                    )),
-                    SizedBox(
-                      width: 10,
-                    ),
-                    TextButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => DetailPage(stock: items[index],)),
-                        );
-                      },
-                      child: const Text('>'),
-                      style: ButtonStyle(
-                        textStyle: WidgetStateProperty.all(
-                          const TextStyle(fontSize: 25), // 設定字體大小
-                        ),
-                      ),
-                    ),
-                  ],
-                )));
-        return ListTile(
-          leading: Icon(Icons.label),
-          title: Text(items[index].name),
-          onTap: () {
-            // Handle item tap
-            showDialog(
-              context: context,
-              builder: (context) => AlertDialog(
-                title: Text('Item Tapped'),
-                content: Text('You tapped on ${items[index].avgPrice}'),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text('OK'),
-                  ),
-                ],
-              ),
-            );
-          },
-        );
-      },
     );
   }
 }
@@ -291,33 +179,5 @@ class GeneratorPage extends StatelessWidget {
     //     ],
     //   ),
     // );
-  }
-}
-
-class FavoritesPage extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    var appState = context.watch<MyAppState>();
-
-    if (appState.favorites.isEmpty) {
-      return Center(
-        child: Text('No favorites yet.'),
-      );
-    }
-
-    return ListView(
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(20),
-          child: Text('You have '
-              '${appState.favorites.length} favorites:'),
-        ),
-        for (var pair in appState.favorites)
-          ListTile(
-            leading: Icon(Icons.favorite),
-            title: Text(pair.asLowerCase),
-          ),
-      ],
-    );
   }
 }
