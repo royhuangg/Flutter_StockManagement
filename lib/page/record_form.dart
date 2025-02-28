@@ -22,7 +22,15 @@ class FormModel extends ChangeNotifier {
     selectedCategoryIndex = index;
     notifyListeners();
   }
+
+  void saveFormData(String name, DateTime date, int categoryIndex) {
+    userName = name;
+    selectedDate = date;
+    selectedCategoryIndex = categoryIndex;
+    notifyListeners();
+  }
 }
+
 
 class RecordFormPage extends StatefulWidget {
   const RecordFormPage({super.key});
@@ -36,42 +44,48 @@ class _RecordFormPageState extends State<RecordFormPage> {
 
   @override
   void dispose() {
-    _controller.dispose(); // 確保釋放資源
+    _controller.dispose();
     super.dispose();
-  }
-
-  String getCurrentDate() {
-    DateTime now = DateTime.now();
-    // 使用 DateFormat 格式化日期
-    return DateFormat('yyyy-MM-dd').format(now);
   }
 
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (context) => FormModel(), // 在這裡創建 FormModel
-      child: SafeArea(
+      create: (_) => FormModel(), // ✅ 確保 FormModel 只在 RecordFormPage 內使用
+      child: _RecordFormBody(controller: _controller),
+    );
+  }
+}
+
+// ✅ 這個 widget 內部才能安全地使用 Provider
+class _RecordFormBody extends StatelessWidget {
+  final TextEditingController controller;
+
+  const _RecordFormBody({required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    final formModel = Provider.of<FormModel>(context); // ✅ 正確取得 FormModel
+
+    return Scaffold(
+      appBar: AppBar(title: const Text("記錄表單")),
+      body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(10.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                '今天的日期是：${getCurrentDate()}',
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 20),
               const Text("進貨日期："),
               const SizedBox(height: 10),
               DatePicker(),
               const SizedBox(height: 20),
               const Text("品類："),
-              CategoryRadioList(),
+              const CategoryRadioList(),
               const SizedBox(height: 10),
-              Text("多少錢："),
+              const Text("多少錢："),
               const SizedBox(height: 20),
               TextField(
-                controller: _controller,
+                controller: controller,
                 keyboardType: TextInputType.number,
                 decoration: const InputDecoration(
                   labelText: '輸入數字',
@@ -81,24 +95,49 @@ class _RecordFormPageState extends State<RecordFormPage> {
               const SizedBox(height: 20),
               ElevatedButton(
                 onPressed: () {
-                  if (_controller.text.isNotEmpty) {
+                  if (controller.text.isNotEmpty) {
+                    if (formModel.selectedDate == null || formModel.selectedCategoryIndex == null) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('請選擇日期和品類！'))
+                      );
+                      return;
+                    }
+
+                    // ✅ 儲存表單數據
+                    formModel.saveFormData(
+                      controller.text,
+                      formModel.selectedDate!,
+                      formModel.selectedCategoryIndex!,
+                    );
+
+                    List<Category> categories = Category.getCategory();
+
                     showDialog(
                       context: context,
-                      builder: (context) => AlertDialog(
-                        title: const Text('您輸入的數字是：'),
-                        content: Text(_controller.text),
+                      builder: (BuildContext dialogContext) => AlertDialog(
+                        title: const Text('確認輸入資料'),
+                        content: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text("數字：${formModel.userName}"),
+                            Text("日期：${DateFormat('yyyy-MM-dd').format(formModel.selectedDate!)}"),
+                            Text("品類：${categories[formModel.selectedCategoryIndex!].name}_${categories[formModel.selectedCategoryIndex!].brand}"),
+                          ],
+                        ),
                         actions: <Widget>[
                           TextButton(
                             onPressed: () {
-                              // 將用戶輸入的數字存儲到 FormModel
-                              Provider.of<FormModel>(context, listen: false)
-                                  .updateUserName(_controller.text);
-                              Navigator.of(context).pop();
+                              Navigator.of(dialogContext).pop();
                             },
                             child: const Text('關閉'),
                           ),
                         ],
                       ),
+                    );
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('請輸入數字！'))
                     );
                   }
                 },
@@ -111,7 +150,6 @@ class _RecordFormPageState extends State<RecordFormPage> {
     );
   }
 }
-
 class CategoryRadioList extends StatelessWidget {
   const CategoryRadioList({super.key});
 
@@ -148,7 +186,7 @@ class DatePicker extends StatelessWidget {
         Text(
           formModel.selectedDate == null
               ? 'No date selected'
-              : 'Selected Date: ${formModel.selectedDate!.toLocal()}',
+              : 'Selected Date: ${DateFormat('yyyy-MM-dd').format(formModel.selectedDate!)}',
         ),
         const SizedBox(height: 20),
         ElevatedButton(
