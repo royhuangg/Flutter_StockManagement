@@ -1,6 +1,10 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import '../LocalStorage.dart';
+import '../model/stock.dart';
 import '../model/category.dart';
 
 class FormModel extends ChangeNotifier {
@@ -23,14 +27,21 @@ class FormModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  void saveFormData(String name, DateTime date, int categoryIndex) {
+  void saveFormData(String name, DateTime date, int categoryIndex) async {
     userName = name;
     selectedDate = date;
     selectedCategoryIndex = categoryIndex;
+    StockItem item =
+        StockItem(name: name, avgPrice: DateFormat('yyyy-MM-dd').format(date));
+    var json = item.toJson();
+    // TODO 改好一點
+    await LocalStorage.saveData('data', json);
+    // String? username = await LocalStorage.getData('data');
+    // var jsona=StockItem.fromJson( username!);
+    // print(jsona.name);
     notifyListeners();
   }
 }
-
 
 class RecordFormPage extends StatefulWidget {
   const RecordFormPage({super.key});
@@ -66,7 +77,7 @@ class _RecordFormBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final formModel = Provider.of<FormModel>(context); // ✅ 正確取得 FormModel
-
+    var data = StockItem(name: "test", avgPrice: "");
     return Scaffold(
       appBar: AppBar(title: const Text("記錄表單")),
       body: SafeArea(
@@ -96,10 +107,10 @@ class _RecordFormBody extends StatelessWidget {
               ElevatedButton(
                 onPressed: () {
                   if (controller.text.isNotEmpty) {
-                    if (formModel.selectedDate == null || formModel.selectedCategoryIndex == null) {
+                    if (formModel.selectedDate == null ||
+                        formModel.selectedCategoryIndex == null) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('請選擇日期和品類！'))
-                      );
+                          const SnackBar(content: Text('請選擇日期和品類！')));
                       return;
                     }
 
@@ -121,8 +132,10 @@ class _RecordFormBody extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text("數字：${formModel.userName}"),
-                            Text("日期：${DateFormat('yyyy-MM-dd').format(formModel.selectedDate!)}"),
-                            Text("品類：${categories[formModel.selectedCategoryIndex!].name}_${categories[formModel.selectedCategoryIndex!].brand}"),
+                            Text(
+                                "日期：${DateFormat('yyyy-MM-dd').format(formModel.selectedDate!)}"),
+                            Text(
+                                "品類：${categories[formModel.selectedCategoryIndex!].name}_${categories[formModel.selectedCategoryIndex!].brand}"),
                           ],
                         ),
                         actions: <Widget>[
@@ -136,9 +149,8 @@ class _RecordFormBody extends StatelessWidget {
                       ),
                     );
                   } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('請輸入數字！'))
-                    );
+                    ScaffoldMessenger.of(context)
+                        .showSnackBar(const SnackBar(content: Text('請輸入數字！')));
                   }
                 },
                 child: const Text("送出"),
@@ -150,6 +162,7 @@ class _RecordFormBody extends StatelessWidget {
     );
   }
 }
+
 class CategoryRadioList extends StatelessWidget {
   const CategoryRadioList({super.key});
 
@@ -162,7 +175,8 @@ class CategoryRadioList extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: categories.map((category) {
         return RadioListTile<int>(
-          title: Text("[${category.category}] ${category.brand}-${category.name}"),
+          title:
+              Text("[${category.category}] ${category.brand}-${category.name}"),
           value: categories.indexOf(category),
           groupValue: formModel.selectedCategoryIndex,
           onChanged: (int? value) {
