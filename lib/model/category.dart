@@ -1,4 +1,5 @@
 class Category {
+  final int id;
   final String category;
   final String brand;
   final String name;
@@ -7,17 +8,20 @@ class Category {
   final String variation;
   final List<String> purchaseUrl;
 
-  Category({required this.category,
-    required this.brand,
-    required this.name,
-    required this.price,
-    required this.imageUrl,
-    required this.variation,
-    required this.purchaseUrl});
+  Category(
+      {required this.id,
+      required this.category,
+      required this.brand,
+      required this.name,
+      required this.price,
+      required this.imageUrl,
+      required this.variation,
+      required this.purchaseUrl});
 
   static List<Category> getCategory() {
     return [
       Category(
+          id: 0,
           category: "潔牙棒",
           brand: "太平洋",
           name: "潔牙棒",
@@ -26,6 +30,7 @@ class Category {
           imageUrl: '',
           variation: ''),
       Category(
+          id: 1,
           category: "尿布",
           brand: "包大人",
           name: "尿布",
@@ -34,6 +39,7 @@ class Category {
           imageUrl: '',
           variation: 'L'),
       Category(
+          id: 2,
           category: "尿布",
           brand: "來復易",
           name: "尿布",

@@ -4,12 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../LocalStorage.dart';
+import '../model/buy_stock_information.dart';
 import '../model/stock.dart';
 import '../model/category.dart';
 
 class FormModel extends ChangeNotifier {
   DateTime? selectedDate;
-  String? userName;
+  int? buyPrice;
   int? selectedCategoryIndex;
 
   void updateDate(DateTime date) {
@@ -18,7 +19,7 @@ class FormModel extends ChangeNotifier {
   }
 
   void updateUserName(String name) {
-    userName = name;
+    buyPrice = name;
     notifyListeners();
   }
 
@@ -27,14 +28,22 @@ class FormModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  void saveFormData(String name, DateTime date, int categoryIndex) async {
-    userName = name;
+  void saveFormData(int price, DateTime date, int categoryIndex) async {
+    buyPrice = price;
     selectedDate = date;
     selectedCategoryIndex = categoryIndex;
-    StockItem item =
-        StockItem(name: name, avgPrice: DateFormat('yyyy-MM-dd').format(date));
+    BuyStockInformation item = BuyStockInformation(
+        categoryId: categoryIndex, price: price, buyDate: date);
     var json = item.toJson();
-    // TODO 改好一點
+
+    //TODO  先拿出 json array 再存進去
+    List buyRecord =
+        jsonDecode(await LocalStorage.getData('buy_record') ?? "");
+    // buyRecord.forEach((element) {
+    //
+    // };
+    // var list = BuyStockInformation.fromJson(buyRecord!);
+
     await LocalStorage.saveData('data', json);
     // String? username = await LocalStorage.getData('data');
     // var jsona=StockItem.fromJson( username!);
@@ -113,12 +122,13 @@ class _RecordFormBody extends StatelessWidget {
                           const SnackBar(content: Text('請選擇日期和品類！')));
                       return;
                     }
+                    int price = int.parse(controller.text);
 
                     // ✅ 儲存表單數據
                     formModel.saveFormData(
-                      controller.text,
+                      price,
                       formModel.selectedDate!,
-                      formModel.selectedCategoryIndex!,
+                      formModel.selectedCategoryIndex ?? -1,
                     );
 
                     List<Category> categories = Category.getCategory();
@@ -131,7 +141,7 @@ class _RecordFormBody extends StatelessWidget {
                           mainAxisSize: MainAxisSize.min,
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text("數字：${formModel.userName}"),
+                            Text("數字：${formModel.buyPrice}"),
                             Text(
                                 "日期：${DateFormat('yyyy-MM-dd').format(formModel.selectedDate!)}"),
                             Text(
